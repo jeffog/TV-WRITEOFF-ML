@@ -59,9 +59,9 @@ beep(4)
 rm(rpartCostfit)
 
 
-cl <- makeCluster(3)
+cl <- makeCluster(2)
 registerDoParallel(cl)
-xgbTreefit = train(WRITE_OFF_YN~., data = tvtrain, method = 'xgbTree', trControl = fitControl)
+xgbTreefit = train(WRITE_OFF_YN~., data = tvtrain, method = 'xgbTree', trControl = fitControl, metric = "Kappa")
 1
 testpred = predict(xgbTreefit, tvtest) #88%!!!!!!!!!!!!!!!!!
 confusionMatrix(testpred, na.omit(tvtest)$WRITE_OFF_YN)  
