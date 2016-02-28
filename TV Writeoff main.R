@@ -71,6 +71,18 @@ stopCluster(cl)
 rm(xgbTreefit)
 
 
+cl <- makeCluster(3)
+registerDoParallel(cl)
+c5fit = train(WRITE_OFF_YN~., data = tvtrain, method = 'c5.0', trControl = fitControl)
+1
+testpred = predict(c5fit, tvtest) #88%!
+confusionMatrix(testpred, na.omit(tvtest)$WRITE_OFF_YN)  
+save(c5fit, file = "c5fit.rda")
+beep(2)
+stopCluster(cl)
+rm(c5fit)
+
+
 ###Logistic Regression
 cl <- makeCluster(3)
 registerDoParallel(cl)
