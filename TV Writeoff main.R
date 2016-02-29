@@ -39,7 +39,7 @@ beep(4)
 rm(avnnetfit)
 
 
-###TREES
+###TREES, seems to give best results
 
 rotationForestfit = train(WRITE_OFF_YN~., data = tvtrain, method = 'rotationForest', trControl = fitControl)
 1
@@ -81,6 +81,30 @@ save(c5fit, file = "c5fit.rda")
 beep(2)
 stopCluster(cl)
 rm(c5fit)
+
+
+cl <- makeCluster(2)
+registerDoParallel(cl)
+J48fit = train(WRITE_OFF_YN~., data = tvtrain, method = 'J48', trControl = fitControl, metric = "Kappa")
+1
+testpred = predict(J48fit, tvtest) #88%!
+confusionMatrix(testpred, na.omit(tvtest)$WRITE_OFF_YN)  
+save(J48fit, file = "J48fit.rda")
+beep(2)
+stopCluster(cl)
+rm(J48fit)
+
+
+cl <- makeCluster(2)
+registerDoParallel(cl)
+c5Costfit = train(WRITE_OFF_YN~., data = tvtrain, method = 'C5.0Cost', trControl = fitControl, metric = "Kappa")
+1
+testpred = predict(c5Costfit, tvtest)
+confusionMatrix(testpred, na.omit(tvtest)$WRITE_OFF_YN)  
+save(c5Costfit, file = "c5Costfit.rda")
+beep(2)
+stopCluster(cl)
+rm(c5Costfit)
 
 
 ###Logistic Regression
