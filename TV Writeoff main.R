@@ -5,14 +5,19 @@ library(beepr)
 library(doParallel)
 
 #setwd('/Users/tamjeff/Documents/R/')
-setwd('D:/Documents/R/TV-WRITEOFF-ML/')
+#setwd('D:/Documents/R/TV-WRITEOFF-ML/')
+setwd('C:/Users/jgaisano/Documents/TV WRITEOFF ML')
+
+
 raw = read.csv(file = 'TV WO Data by Tag.csv', stringsAsFactors = TRUE)
-tvnew = raw[raw$FISCAL_YEAR == '2015' | raw$FISCAL_QUARTER == 'Q4_2016',]
+tvnew = raw[raw$FISCAL_YEAR == '2015' | raw$FISCAL_YEAR == '2016',]
+tvnew$WRITE_OFF_YN = as.factor(tvnew$WRITE_OFF_YN)
 rm(raw)
 
 trainIndex = createDataPartition(tvnew$WRITE_OFF_YN, p = 0.5, list = FALSE, times = 1)
 tvtrain = tvnew[trainIndex,]
 tvtest = tvnew[-trainIndex,]
+
 tvtrain$WRITE_OFF_YN[tvtrain$WRITE_OFF_YN == '1'] = "YES"
 tvtrain$WRITE_OFF_YN[tvtrain$WRITE_OFF_YN == '0'] = "NO"
 tvtest$WRITE_OFF_YN[tvtest$WRITE_OFF_YN == '1'] = "YES"
@@ -30,22 +35,28 @@ fitControl = trainControl(method = "repeatedCV", number = 10, repeats = 10)
 
 ###NEURAL NETWORKS
 
-avnnetfit = train(WRITE_OFF_YN~., data = tvtrain, method = 'avNNet', trControl = fitControl)
+cl <- makeCluster(2)
+registerDoParallel(cl)
+avnnetfit = train(WRITE_OFF_YN~., data = tvtrain, method = 'avNNet', trControl = fitControl, metric = "Kappa")
 1
 testpred = predict(avnnetfit, tvtest)
-confusionMatrix(testpred, na.omit(tvtest)$WRITE_OFF_YN) #Hours of training, BUT 86% accuracy!
+confusionMatrix(testpred, na.omit(tvtest)$WRITE_OFF_YN)
 save(avnnetfit, file = "avnnetfit.rda")
 beep(4)
+stopCluster(cl)
+png(filename = "avnnet.png")
+plot(varImp(avnnetfit), top = 20)
+dev.off()
 rm(avnnetfit)
 
 
-###TREES, seems to give best results
+###TREES
 
 rotationForestfit = train(WRITE_OFF_YN~., data = tvtrain, method = 'rotationForest', trControl = fitControl)
 1
 testpred = predict(rotationForestfit, tvtest)
 confusionMatrix(testpred, na.omit(tvtest)$WRITE_OFF_YN)  
-save(rotationForestfit, file = "rotationForestfit.rda") #86%
+save(rotationForestfit, file = "rotationForestfit.rda") 
 beep(2)
 rm(rotationForestfit)
 
@@ -53,7 +64,7 @@ rm(rotationForestfit)
 rpartCostfit = train(WRITE_OFF_YN~., data = tvtrain, method = 'rpartCost', trControl = fitControl)
 1
 testpred = predict(rpartCostfit, tvtest)
-confusionMatrix(testpred, na.omit(tvtest)$WRITE_OFF_YN)  #fast! 86%!
+confusionMatrix(testpred, na.omit(tvtest)$WRITE_OFF_YN)
 save(rpartCostfit, file = "rpartCostfit.rda")
 beep(4)
 rm(rpartCostfit)
@@ -63,23 +74,29 @@ cl <- makeCluster(2)
 registerDoParallel(cl)
 xgbTreefit = train(WRITE_OFF_YN~., data = tvtrain, method = 'xgbTree', trControl = fitControl, metric = "Kappa")
 1
-testpred = predict(xgbTreefit, tvtest) #88%!!!!!!!!!!!!!!!!!
+testpred = predict(xgbTreefit, tvtest) #89% Acc, 39% Kappa
 confusionMatrix(testpred, na.omit(tvtest)$WRITE_OFF_YN)  
-save(xgbTreefit, file = "xgbTreefit.rda")
+save(xgbTreefit, file = "xgbTreefit2.rda")
 beep(2)
 stopCluster(cl)
+png(filename = "xgbTreefit.png")
+plot(varImp(xgbTreefit), top = 20)
+dev.off()
 rm(xgbTreefit)
 
 
-cl <- makeCluster(3)
+cl <- makeCluster(2)
 registerDoParallel(cl)
-c5fit = train(WRITE_OFF_YN~., data = tvtrain, method = 'c5.0', trControl = fitControl)
+c5fit = train(WRITE_OFF_YN~., data = tvtrain, method = 'C5.0', trControl = fitControl)
 1
-testpred = predict(c5fit, tvtest) #88%!
+testpred = predict(c5fit, tvtest) 
 confusionMatrix(testpred, na.omit(tvtest)$WRITE_OFF_YN)  
 save(c5fit, file = "c5fit.rda")
 beep(2)
 stopCluster(cl)
+png(filename = "c5fit.png")
+plot(varImp(c5fit), top = 20)
+dev.off()
 rm(c5fit)
 
 
@@ -87,7 +104,7 @@ cl <- makeCluster(2)
 registerDoParallel(cl)
 J48fit = train(WRITE_OFF_YN~., data = tvtrain, method = 'J48', trControl = fitControl, metric = "Kappa")
 1
-testpred = predict(J48fit, tvtest) #88%!
+testpred = predict(J48fit, tvtest) 
 confusionMatrix(testpred, na.omit(tvtest)$WRITE_OFF_YN)  
 save(J48fit, file = "J48fit.rda")
 beep(2)
