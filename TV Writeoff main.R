@@ -26,25 +26,39 @@ fitControl = trainControl(method = "repeatedCV", number = 10, repeats = 10,
                           adaptive = list(min = 10,
                                           alpha = 0.05,
                                           method = "gls",
-                                          complete = TRUE))
+                                          complete = TRUE)) #adaptive resampling helps find best parameters
 
 
 
 ###NEURAL NETWORKS
+cl <- makeCluster(2)
+registerDoParallel(cl)
+avNNetfit = train(WRITE_OFF_YN~., data = tvtrain, method = 'avNNet', trControl = fitControl, metric = "Kappa")
+1
+testpred = predict(avNNetfit, tvtest)
+confusionMatrix(testpred, na.omit(tvtest)$WRITE_OFF_YN)
+save(avNNetfit, file = "avNNetfit.rda")
+beep(4)
+stopCluster(cl)
+png(filename = "avNNetfit.png")
+plot(varImp(avNNetfit), top = 20)
+dev.off()
+rm(avNNetfit)
+
 
 cl <- makeCluster(2)
 registerDoParallel(cl)
-avnnetfit = train(WRITE_OFF_YN~., data = tvtrain, method = 'avNNet', trControl = fitControl, metric = "Kappa")
+nnetfit = train(WRITE_OFF_YN~., data = tvtrain, method = 'nnet', trControl = fitControl, metric = "Kappa")
 1
-testpred = predict(avnnetfit, tvtest)
+testpred = predict(nnetfit, tvtest)
 confusionMatrix(testpred, na.omit(tvtest)$WRITE_OFF_YN)
-save(avnnetfit, file = "avnnetfit.rda")
+save(nnetfit, file = "nnetfit.rda")
 beep(4)
 stopCluster(cl)
-png(filename = "avnnet.png")
-plot(varImp(avnnetfit), top = 20)
+png(filename = "nnetfit.png")
+plot(varImp(nnetfit), top = 20)
 dev.off()
-rm(avnnetfit)
+rm(nnetfit)
 
 
 ###TREES
@@ -61,6 +75,7 @@ plot(varImp(rotationForestfit), top = 20)
 dev.off()
 beep(2)
 rm(rotationForestfit)
+
 
 cl <- makeCluster(2)
 registerDoParallel(cl)
@@ -129,6 +144,9 @@ c5Costfit = train(WRITE_OFF_YN~., data = tvtrain, method = 'C5.0Cost', trControl
 testpred = predict(c5Costfit, tvtest)
 confusionMatrix(testpred, na.omit(tvtest)$WRITE_OFF_YN)  
 save(c5Costfit, file = "c5Costfit.rda")
+png(filename = "c5Costfit.png")
+plot(varImp(c5Costfit), top = 20)
+dev.off()
 beep(2)
 stopCluster(cl)
 rm(c5Costfit)
@@ -148,6 +166,22 @@ png(filename = "adafit.png")
 plot(varImp(adafit), top = 20)
 dev.off()
 rm(adafit)
+
+
+cl <- makeCluster(2)
+registerDoParallel(cl)
+AdaBoostM1fit = train(WRITE_OFF_YN~., data = tvtrain, method = 'AdaBoost.M1', trControl = fitControl, metric = "Kappa")
+1
+testpred = predict(AdaBoostM1fit, tvtest) 
+confusionMatrix(testpred, na.omit(tvtest)$WRITE_OFF_YN)  
+save(adafit, file = "AdaBoostM1fit.rda")
+beep(2)
+stopCluster(cl)
+png(filename = "AdaBoostM1fit.png")
+plot(varImp(AdaBoostM1fit), top = 20)
+dev.off()
+rm(AdaBoostM1fit)
+
 
 
 ###Logistic Regression, no luck
